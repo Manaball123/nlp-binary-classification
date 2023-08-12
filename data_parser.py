@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import tokenizer
+import torch
+import os
+import utils
 #DO NOT MODIFY DF
 files_index : pd.DataFrame = None
 
@@ -25,8 +28,6 @@ def get_files_index():
         files_index.rename(columns={"list" : "confidence"}, inplace=True)
         files_index = files_index[["confidence", "total", "positives"]]
 
-        print(files_index.head(10))
-        print(files_index.loc["143837"])
     return files_index
 
 
@@ -34,5 +35,19 @@ def load_entry(id : str) -> tuple:
     data_raw = get_bin_data("dataset/samples/" + id)
     if not data_raw:
         return None
-    tensor = tokenizer.bytes_to_tensor(data_raw)
+    in_tensor = tokenizer.bytes_to_tensor(data_raw)
+    out_tensor = torch.zeros(1,1,1)
+    out_tensor[0][0][0] = files_index.loc[id]["confidence"]
+    #should have marginally better performance
+    return (in_tensor.to(utils.get_device()),out_tensor.to(utils.get_device()))
+
+
+def load_all_available():
+    files_available = []
+    for file_path in os.listdir("dataset/samples"):
+        files_available.append(file_path)
+    training_data = []
+    for v in files_available:
+        training_data.append(load_entry(v))
+    return training_data
     

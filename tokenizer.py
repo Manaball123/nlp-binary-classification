@@ -15,7 +15,7 @@ def bytes_to_tensor(bytes_in : bytes) -> torch.Tensor:
     #prob gonna use a single byte as token anyway but adaptability etc etc
 
     for i in range(0, len(bytes_in), config.WORD_SIZE):
-        tensor[i][0][word_to_idx(bytes_in[i + config.WORD_SIZE])] = 1
+        tensor[i][0][word_to_idx(bytes_in[i:i + config.WORD_SIZE])] = 1.0
     return tensor
 
 
