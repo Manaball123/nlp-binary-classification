@@ -39,7 +39,8 @@ def load_entry(id : str) -> tuple:
     out_tensor = torch.zeros(1,1,1)
     out_tensor[0][0][0] = files_index.loc[id]["confidence"]
     #should have marginally better performance
-    return (in_tensor.to(utils.get_device()),out_tensor.to(utils.get_device()))
+    #never occured to me that this, surprisingly, eats up vram
+    return (in_tensor,out_tensor)
 
 
 def load_all_available():

@@ -10,6 +10,8 @@ import os
 import math
 import time
 import itertools
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 
 
@@ -18,23 +20,13 @@ def main():
     
 
 
-
+    session_id = str(time.time_ns())
+    os.mkdir("./checkpoints/" + session_id)
     device = utils.get_device()
     device_cpu = torch.device("cpu")
     data_parser.get_files_index()
 
-    #train_data = TensorDataset(torch.from_numpy(x_train), torch.from_numpy(y_train))
-    #valid_data = TensorDataset(torch.from_numpy(x_test), torch.from_numpy(y_test))
-    # obtain one batch of training data
-    #dataiter = iter(train_loader)
-    #sample_x, sample_y = dataiter.next()
-
-    batch_size = 50
-
-    # make sure to SHUFFLE your data
-    #train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
-    #valid_loader = DataLoader(valid_data, shuffle=True, batch_size=batch_size)
-    rnn = model.RNN(config.TOKENS_N, 256, 1)
+    rnn = model.RNN(config.TOKENS_N, 64, 128, 1)
 
     train_data = data_parser.load_all_available()
 
@@ -42,11 +34,12 @@ def main():
     rnn.to(device)
 
     criterion = torch.nn.NLLLoss()
-    learning_rate = 0.5
+    learning_rate = 0.2
 
     def train(input_tensor : torch.Tensor, target_tensor : torch.Tensor):
-        #input_tensor = input_tensor.to(device)
-        #target_tensor = target_tensor.to(device)
+        
+        input_tensor = input_tensor.to(device)
+        target_tensor = target_tensor.to(device)
         hidden = rnn.initHidden().to(device)
 
         rnn.zero_grad()
@@ -84,8 +77,9 @@ def main():
 
     start = time.time()
 
-    repeat_times = 3
+    repeat_times = 4
     for iter in range(len(train_data) * repeat_times):
+        
         output, loss = train(*train_data[iter % len(train_data)])
         current_loss += loss
 
@@ -100,12 +94,14 @@ def main():
         if iter % plot_every == 0:
             all_losses.append(current_loss / plot_every)
             current_loss = 0
-    import matplotlib.pyplot as plt
-    import matplotlib.ticker as ticker
+        torch.save(rnn.state_dict(), "./checkpoints/" + session_id + "/" + str(iter) + ".pt")
+        learning_rate = learning_rate ** 2
+    
 
     plt.figure()
     plt.plot(all_losses)
     plt.show()
+    torch.save(rnn.state_dict(), "./model.pt")
 
     
 
