@@ -8,14 +8,7 @@ import utils
 files_index : pd.DataFrame = None
 
 
-def get_bin_data(filename : str) -> bytes:
-    try:
-        with open(filename, "rb") as f:
-            data = f.read()
-        return data
-    except FileNotFoundError:
-        print("[WARN]: filename " + filename + " not found!")
-        return None
+
 
 def get_files_index():
     global files_index
@@ -32,7 +25,7 @@ def get_files_index():
 
 
 def load_entry(id : str) -> tuple:
-    data_raw = get_bin_data("dataset/samples/" + id)
+    data_raw = utils.get_bin_data("dataset/samples/" + id)
     if not data_raw:
         return None
     in_tensor = tokenizer.bytes_to_tensor(data_raw)
@@ -42,13 +35,24 @@ def load_entry(id : str) -> tuple:
     #never occured to me that this, surprisingly, eats up vram
     return (in_tensor,out_tensor)
 
-
-def load_all_available():
+def get_available_entries() -> list:
     files_available = []
     for file_path in os.listdir("dataset/samples"):
         files_available.append(file_path)
+    return files_available
+
+def get_target_tensor(id : str) -> torch.Tensor:
+    out_tensor = torch.zeros(1,1,1)
+    out_tensor[0][0][0] = files_index.loc[id]["confidence"]
+    return out_tensor
+
+
+def load_all_available():
+    files_available = get_available_entries()
     training_data = []
     for v in files_available:
-        training_data.append(load_entry(v))
+        #training_data.append(load_entry(v))
+        #WAY faster load times
+        training_data.append(tokenizer.entry_id_to_tensor(v))
     return training_data
     

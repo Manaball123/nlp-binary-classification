@@ -19,7 +19,7 @@ class RNN(nn.Module):
 
     def forward(self, input, hidden):
         embedding_pass = self.embedding(input)
-        combined = torch.cat((embedding_pass, hidden), 1)
+        combined = torch.cat((embedding_pass, hidden), 0)
         hidden = self.i2h(combined)
         output = self.h2o(hidden)
         #output = self.softmax(output)
@@ -27,5 +27,5 @@ class RNN(nn.Module):
         return output, hidden
 
     def initHidden(self):
-        return torch.zeros(1, self.hidden_size)
+        return torch.zeros(self.hidden_size)
     

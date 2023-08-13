@@ -12,14 +12,36 @@ import time
 import itertools
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import tokenizer
+import random
+import copy
 
 
+
+
+def train(model_to_train : model.RNN, input_tensor : torch.Tensor, target_tensor : torch.Tensor, learning_rate = 0.05, criterion = torch.nn.NLLLoss):
+        
+    device = utils.get_device()
+    hidden = model_to_train.initHidden().to(device)
+
+    model_to_train.zero_grad()
+
+    for i in range(input_tensor.size()[0]):
+        output, hidden = model_to_train(input_tensor[i], hidden)
+    #it just is what it is, dont question it
+    output_1d, target_1d = output.squeeze(1), target_tensor.squeeze((1,2)).type(torch.LongTensor).to(device)
+    #god i hate this code
+    loss = criterion(output_1d, target_1d)
+    loss.backward()
+
+    # Add parameters' gradients to their values, multiplied by learning rate
+    for p in model_to_train.parameters():
+        p.data.add_(p.grad.data, alpha=-learning_rate)
+
+    return output, loss.item()
 
 
 def main():
-    
-
-
     session_id = str(time.time_ns())
     os.mkdir("./checkpoints/" + session_id)
     device = utils.get_device()
@@ -28,7 +50,12 @@ def main():
 
     rnn = model.RNN(config.TOKENS_N, 64, 128, 1)
 
-    train_data = data_parser.load_all_available()
+    start_time = time.time()
+
+
+    #print("Loading data")
+    #train_data = data_parser.load_all_available()
+    #print("Data loaded.")
 
     #moving to gpu
     rnn.to(device)
@@ -36,27 +63,7 @@ def main():
     criterion = torch.nn.NLLLoss()
     learning_rate = 0.2
 
-    def train(input_tensor : torch.Tensor, target_tensor : torch.Tensor):
-        
-        input_tensor = input_tensor.to(device)
-        target_tensor = target_tensor.to(device)
-        hidden = rnn.initHidden().to(device)
-
-        rnn.zero_grad()
-
-        for i in range(input_tensor.size()[0]):
-            output, hidden = rnn(input_tensor[i], hidden)
-        #it just is what it is, dont question it
-        output_1d, target_1d = output.squeeze(1), target_tensor.squeeze((1,2)).type(torch.LongTensor).to(device)
-        #god i hate this code
-        loss = criterion(output_1d, target_1d)
-        loss.backward()
-
-        # Add parameters' gradients to their values, multiplied by learning rate
-        for p in rnn.parameters():
-            p.data.add_(p.grad.data, alpha=-learning_rate)
-
-        return output, loss.item()
+    
 
 
     print_every = 1
@@ -68,35 +75,39 @@ def main():
     current_loss = 0
     all_losses = []
 
-    def timeSince(since):
-        now = time.time()
-        s = now - since
-        m = math.floor(s / 60)
-        s -= m * 60
-        return '%dm %ds' % (m, s)
 
     start = time.time()
 
+    train_entries = data_parser.get_available_entries()
+
     repeat_times = 4
-    for iter in range(len(train_data) * repeat_times):
-        
-        output, loss = train(*train_data[iter % len(train_data)])
-        current_loss += loss
+    total_epochs = 5
+    for epoch in range(total_epochs):
+        current_entries = copy.deepcopy(train_entries)
+        random.shuffle(current_entries)
+        print("Executing epoch " + str(epoch))
 
-        # Print ``iter`` number, loss, name and guess
-        if iter % print_every == 0:
+        for it, entry in enumerate(current_entries):
+            input_tensor = tokenizer.entry_id_to_tensor(entry).to(device)
+            target_tensor = data_parser.get_target_tensor(entry).to(device)
 
-            print(output)
-            print("Iteration loss: " + str(loss))
+            output, loss = train(rnn, input_tensor, target_tensor, learning_rate, criterion)
+            current_loss += loss
+
+            # Print ``iter`` number, loss, name and guess
+            if it % print_every == 0:
+
+                print(output)
+                print("Iteration " + str(it) + "loss: " + str(loss))
            
-
-        # Add current loss avg to list of losses
-        if iter % plot_every == 0:
-            all_losses.append(current_loss / plot_every)
-            current_loss = 0
-        torch.save(rnn.state_dict(), "./checkpoints/" + session_id + "/" + str(iter) + ".pt")
-        learning_rate = learning_rate ** 2
-    
+            # Add current loss avg to list of losses
+            if it % plot_every == 0:
+                all_losses.append(current_loss / plot_every)
+                current_loss = 0
+            
+            learning_rate = learning_rate ** 2
+        torch.save(rnn.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
+        
 
     plt.figure()
     plt.plot(all_losses)

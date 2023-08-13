@@ -9,4 +9,13 @@ def get_device() -> torch.device:
     
     print("GPU not available, CPU used")
     return torch.device("cpu")
+
+def get_bin_data(filename : str) -> bytes:
+    try:
+        with open(filename, "rb") as f:
+            data = f.read()
+        return data
+    except FileNotFoundError:
+        print("[WARN]: filename " + filename + " not found!")
+        return None
         
