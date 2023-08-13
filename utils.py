@@ -1,4 +1,5 @@
 import torch
+import config
 
 def get_device() -> torch.device:
     is_cuda = torch.cuda.is_available()
@@ -19,3 +20,6 @@ def get_bin_data(filename : str) -> bytes:
         print("[WARN]: filename " + filename + " not found!")
         return None
         
+def verbose_log(text : str):
+    if config.verbose:
+        print(text)

@@ -24,6 +24,7 @@ def get_files_index():
     return files_index
 
 
+#deprecated
 def load_entry(id : str) -> tuple:
     data_raw = utils.get_bin_data("dataset/samples/" + id)
     if not data_raw:
@@ -42,8 +43,8 @@ def get_available_entries() -> list:
     return files_available
 
 def get_target_tensor(id : str) -> torch.Tensor:
-    out_tensor = torch.zeros(1,1,1)
-    out_tensor[0][0][0] = files_index.loc[id]["confidence"]
+    out_tensor = torch.zeros(1)
+    out_tensor[0] = files_index.loc[id]["confidence"]
     return out_tensor
 
 
@@ -55,4 +56,11 @@ def load_all_available():
         #WAY faster load times
         training_data.append(tokenizer.entry_id_to_tensor(v))
     return training_data
+
+def get_entry_type(id : str) -> bool:
+    conf = files_index.loc[id]["confidence"]
+    if conf == 1.0:
+        return True
+    return False
+
     

@@ -9,3 +9,4 @@ vocab_size = WORD_SIZE
 embedding_dim = 64
 output_dim = 1
 hidden_dim = 256
+verbose = True

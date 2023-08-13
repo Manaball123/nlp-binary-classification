@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 dataset/samples
 checkpoints
+runs
 
 # C extensions
 *.so
