@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 dataset/samples
+dataset/samples_backups
 checkpoints
 runs
 

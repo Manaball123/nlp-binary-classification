@@ -26,11 +26,9 @@ def is_nan(tensor : torch.Tensor) -> torch.Tensor:
 
 
 
-def train(model_to_train : torch.nn.Module, input_tensor : torch.Tensor, target_tensor : torch.Tensor, learning_rate = 0.05, criterion = torch.nn.BCELoss):
-    optimizer = torch.optim.Adam(model_to_train.parameters(), learning_rate)
+def train(model_to_train : torch.nn.Module, input_tensor : torch.Tensor, target_tensor : torch.Tensor, optimizer : torch.optim.Optimizer, learning_rate = 1e-3, criterion = torch.nn.BCELoss):
         
     device = utils.get_device()
-    model_to_train.init_states()
 
     
     #hidden_backup = hidden.clone()
@@ -45,9 +43,10 @@ def train(model_to_train : torch.nn.Module, input_tensor : torch.Tensor, target_
     #god i hate this code
 
     model_to_train.zero_grad()
-
-    loss = criterion(output, target_tensor)
-
+    optimizer.zero_grad()
+    #only use the last output element
+    loss = criterion(output[-1], target_tensor)
+    torch.nn.utils.clip_grad_norm(model_to_train.parameters(), max_norm=5.0)
     loss.backward()
     optimizer.step()
 
@@ -68,8 +67,8 @@ def main():
     device_cpu = torch.device("cpu")
     data_parser.get_files_index()
 
-    lstm = model.LSTM(config.TOKENS_N, 64, 512, 1)
-
+    #lstm = model.LSTM(config.TOKENS_N, 64, 2048, 1)
+    lstm = model.TorchLSTM(config.TOKENS_N, 64, 512, 1, 4)
     start_time = time.time()
 
 
@@ -80,10 +79,12 @@ def main():
     #moving to gpu
     lstm.to(device)
 
-    criterion = torch.nn.BCELoss()
-    learning_rate = 0.001
+    
+    learning_rate = 1e-3
     benign_samples_n = 512
     malicious_samples_n = 512
+    criterion = torch.nn.BCELoss()
+    
 
     
 
@@ -127,14 +128,15 @@ def main():
         random.shuffle(current_entries)
         print("\n\n\n------------------------------------Executing epoch " + str(epoch) + "------------------------------------\n\n\n")
 
+        optimizer = torch.optim.Adam(lstm.parameters(), learning_rate)
         for it, entry in enumerate(current_entries):
             entry_start_time = time.time()
             utils.verbose_log("===========Processing " + entry + ", number " + str(it) + "============")
             input_tensor = tokenizer.entry_id_to_tensor(entry).to(device)
             target_tensor = data_parser.get_target_tensor(entry).to(device)
             utils.verbose_log("Data preprocessing complete. Target tensor: " + str(target_tensor) + ", Input tensor size: " + str(input_tensor.size()))
-            for i in range(input_tensor.size()[0]):
-                output, loss = train(lstm, input_tensor[i], target_tensor, learning_rate, criterion)
+
+            output, loss = train(lstm, input_tensor, target_tensor, optimizer, learning_rate, criterion)
             current_loss += loss
             entry_end_time = time.time()
 

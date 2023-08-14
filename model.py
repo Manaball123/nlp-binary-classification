@@ -45,7 +45,9 @@ class LSTM(nn.Module):
         #concated embedding + hidden
         self.intermediate_size = embedding_size + hidden_size
         self.embedding_network = nn.Sequential(
-            nn.Linear(input_size, embedding_size)
+            nn.Linear(input_size, embedding_size),
+            nn.Softmax(1)
+        
         )
 
         self.forget_gate_network = nn.Sequential(
@@ -78,39 +80,71 @@ class LSTM(nn.Module):
 
 
     def init_states(self):
-        #h
+        #hidden
         self.hidden_t = torch.zeros(self.hidden_size).to(self.device)
-        #C
+        #memory cells
         self.c_t = torch.zeros(self.c_size).to(self.device)
 
     #data should be a onehot vector
     def forward(self, data):
+        self.init_states()
+        #torch.set_printoptions(threshold = 10000)
+        #print(data.size())
         embedding = self.embedding_network(data)
-        intermediates = torch.cat((embedding, self.hidden_t), 0)
+        #print(embedding.size())
+        for i in range(data.size()[0]):
+            intermediates = torch.cat((embedding[i], self.hidden_t), 0)
 
-        forget_t = self.forget_gate_network(intermediates)
-        
+            forget_t = self.forget_gate_network(intermediates)
+            
 
-        info_t = self.information_gate_network(intermediates)
-        signal_t = self.memory_signal_network(intermediates)
+            info_t = self.information_gate_network(intermediates)
+            signal_t = self.memory_signal_network(intermediates)
 
-        info_gated_t = info_t * signal_t
+            info_gated_t = info_t * signal_t
 
-        #forget some info
-        self.c_t = forget_t * self.c_t
-        #add new info
-        self.c_t = torch.add(self.c_t, info_gated_t)
+            #forget some info
+            self.c_t = forget_t * self.c_t
+            #add new info
+            self.c_t = torch.add(self.c_t, info_gated_t)
 
-        #transform memory for hidden
-        mem_transformed = self.memory_transformer(self.c_t)
+            #transform memory for hidden
+            mem_transformed = self.memory_transformer(self.c_t)
 
-        #
-        out_gate_t = self.hidden_output_gate_network(intermediates)
-        #also selectively forget some stuff
-        self.hidden_t = mem_transformed * out_gate_t
+            #
+            out_gate_t = self.hidden_output_gate_network(intermediates)
+            #also selectively forget some stuff
+            self.hidden_t = mem_transformed * out_gate_t
+
         output = self.hidden_to_output_network(self.hidden_t)
         return output
 
+
+class TorchLSTM(nn.Module):
+    def __init__(self, input_size, embedding_size, hidden_size, output_size, n_layers = 1) -> None:
+        super(TorchLSTM, self).__init__()
+        self.device = utils.get_device()
+
+        self.embedding_network = nn.Sequential(
+            nn.Linear(input_size, embedding_size)
+        )
+        #:crying_emoji:
+        self.lstm_model = nn.LSTM(input_size=embedding_size, hidden_size=hidden_size, num_layers=n_layers, batch_first=True)
+
+        self.out_newtwork = nn.Sequential(
+            nn.Linear(hidden_size, output_size),
+            nn.Sigmoid()
+        )
+        #torch.nn.init.kaiming_normal_(self.parameters())
+    
+    def forward(self, data):
+        embedding = self.embedding_network(data)
+        output, (h_n, c_n) = self.lstm_model(embedding)
+        output = self.out_newtwork(output)
+        return output
+
+
+    
 
 
     
