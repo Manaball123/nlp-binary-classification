@@ -20,31 +20,37 @@ from torchvision import datasets, transforms
 import pdb
 
 
+def is_nan(tensor : torch.Tensor) -> torch.Tensor:
+    return tensor.isnan().any()
 
 
 
 
-def train(model_to_train : model.RNN, input_tensor : torch.Tensor, target_tensor : torch.Tensor, learning_rate = 0.05, criterion = torch.nn.BCELoss):
+def train(model_to_train : torch.nn.Module, input_tensor : torch.Tensor, target_tensor : torch.Tensor, learning_rate = 0.05, criterion = torch.nn.BCELoss):
     optimizer = torch.optim.Adam(model_to_train.parameters(), learning_rate)
         
     device = utils.get_device()
-    hidden = model_to_train.initHidden().to(device)
+    model_to_train.init_states()
 
-    model_to_train.zero_grad()
+    
+    #hidden_backup = hidden.clone()
 
-    for i in range(input_tensor.size()[0]):
-        output, hidden = model_to_train(input_tensor[i], hidden)
+    output = model_to_train(input_tensor)
+        #if(torch.isnan(hidden).any() or torch.isinf(hidden).any()):
+        #    torch.set_printoptions(threshold = 10000)
+            
+        #hidden_backup = hidden.clone()
     #it just is what it is, dont question it
     #output_1d, target_1d = output.squeeze(1), target_tensor.squeeze((1,2)).type(torch.LongTensor).to(device)
     #god i hate this code
-    
-    try:
-        loss = criterion(output, target_tensor)
-        loss.backward()
-        optimizer.step()
-    except:
-        pdb.set_trace()
-        print(loss)
+
+    model_to_train.zero_grad()
+
+    loss = criterion(output, target_tensor)
+
+    loss.backward()
+    optimizer.step()
+
         
 
 
@@ -62,7 +68,7 @@ def main():
     device_cpu = torch.device("cpu")
     data_parser.get_files_index()
 
-    rnn = model.RNN(config.TOKENS_N, 64, 512, 1)
+    lstm = model.LSTM(config.TOKENS_N, 64, 512, 1)
 
     start_time = time.time()
 
@@ -72,7 +78,7 @@ def main():
     #print("Data loaded.")
 
     #moving to gpu
-    rnn.to(device)
+    lstm.to(device)
 
     criterion = torch.nn.BCELoss()
     learning_rate = 0.001
@@ -127,7 +133,8 @@ def main():
             input_tensor = tokenizer.entry_id_to_tensor(entry).to(device)
             target_tensor = data_parser.get_target_tensor(entry).to(device)
             utils.verbose_log("Data preprocessing complete. Target tensor: " + str(target_tensor) + ", Input tensor size: " + str(input_tensor.size()))
-            output, loss = train(rnn, input_tensor, target_tensor, learning_rate, criterion)
+            for i in range(input_tensor.size()[0]):
+                output, loss = train(lstm, input_tensor[i], target_tensor, learning_rate, criterion)
             current_loss += loss
             entry_end_time = time.time()
 
@@ -145,11 +152,11 @@ def main():
 
             
         learning_rate = learning_rate * 0.5
-        torch.save(rnn.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
+        torch.save(lstm.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
         
 
     plt.show()
-    torch.save(rnn.state_dict(), "./model.pt")
+    torch.save(lstm.state_dict(), "./model.pt")
 
     
 
