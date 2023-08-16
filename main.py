@@ -68,7 +68,7 @@ def main():
     data_parser.get_files_index()
 
     #lstm = model.LSTM(config.TOKENS_N, 64, 2048, 1)
-    lstm = model.TorchLSTM(config.WORD_SIZE * 8, config.WORD_SIZE * 8, 512, 1, 4)
+    transformer = model.TransformerModel(config.WORD_SIZE * 8, ).to(device)
     start_time = time.time()
 
 
@@ -76,8 +76,7 @@ def main():
     #train_data = data_parser.load_all_available()
     #print("Data loaded.")
 
-    #moving to gpu
-    lstm.to(device)
+    
 
     
     learning_rate = 1e-3
@@ -128,7 +127,7 @@ def main():
         random.shuffle(current_entries)
         print("\n\n\n------------------------------------Executing epoch " + str(epoch) + "------------------------------------\n\n\n")
 
-        optimizer = torch.optim.Adam(lstm.parameters(), learning_rate)
+        optimizer = torch.optim.Adam(transformer.parameters(), learning_rate)
         for it, entry in enumerate(current_entries):
             entry_start_time = time.time()
             utils.verbose_log("===========Processing " + entry + ", number " + str(it) + "============")
@@ -136,7 +135,7 @@ def main():
             target_tensor = data_parser.get_target_tensor(entry).to(device)
             utils.verbose_log("Data preprocessing complete. Target tensor: " + str(target_tensor) + ", Input tensor size: " + str(input_tensor.size()))
 
-            output, loss = train(lstm, input_tensor, target_tensor, optimizer, learning_rate, criterion)
+            output, loss = train(transformer, input_tensor, target_tensor, optimizer, learning_rate, criterion)
             current_loss += loss
             entry_end_time = time.time()
 
@@ -154,11 +153,11 @@ def main():
 
             
         learning_rate = learning_rate * 0.5
-        torch.save(lstm.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
+        torch.save(transformer.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
         
 
     plt.show()
-    torch.save(lstm.state_dict(), "./model.pt")
+    torch.save(transformer.state_dict(), "./model.pt")
 
     
 
