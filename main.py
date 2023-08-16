@@ -68,7 +68,7 @@ def main():
     data_parser.get_files_index()
 
     #lstm = model.LSTM(config.TOKENS_N, 64, 2048, 1)
-    lstm = model.TorchLSTM(config.TOKENS_N, 64, 512, 1, 4)
+    lstm = model.TorchLSTM(config.WORD_SIZE * 8, config.WORD_SIZE * 8, 512, 1, 4)
     start_time = time.time()
 
 
@@ -140,7 +140,7 @@ def main():
             current_loss += loss
             entry_end_time = time.time()
 
-            utils.verbose_log("Procession complete. output: " + str(output) + ", loss: " + str(loss))
+            utils.verbose_log("Procession complete. final output: " + str(output[-1]) + ", loss: " + str(loss))
             utils.verbose_log("Time taken: " + str(entry_end_time - entry_start_time) + " seconds.")
 
 

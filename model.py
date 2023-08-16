@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import utils
 
+
 class RNN(nn.Module):
     def __init__(self, input_size, embedding_out_size, hidden_size, output_size):
         super(RNN, self).__init__()
@@ -45,8 +46,8 @@ class LSTM(nn.Module):
         #concated embedding + hidden
         self.intermediate_size = embedding_size + hidden_size
         self.embedding_network = nn.Sequential(
-            nn.Linear(input_size, embedding_size),
-            nn.Softmax(1)
+            #nn.Linear(input_size, embedding_size),
+            #nn.Softmax(1)
         
         )
 
@@ -126,7 +127,7 @@ class TorchLSTM(nn.Module):
         self.device = utils.get_device()
 
         self.embedding_network = nn.Sequential(
-            nn.Linear(input_size, embedding_size)
+            nn.Embedding(embedding_size, 1)
         )
         #:crying_emoji:
         self.lstm_model = nn.LSTM(input_size=embedding_size, hidden_size=hidden_size, num_layers=n_layers, batch_first=True)
@@ -138,7 +139,7 @@ class TorchLSTM(nn.Module):
         #torch.nn.init.kaiming_normal_(self.parameters())
     
     def forward(self, data):
-        embedding = self.embedding_network(data)
+        embedding = self.embedding_network(data).squeeze(2)
         output, (h_n, c_n) = self.lstm_model(embedding)
         output = self.out_newtwork(output)
         return output

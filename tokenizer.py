@@ -4,6 +4,9 @@ import config
 import torch
 import utils
 
+
+    
+
 def word_to_idx(word : bytes):
     assert(len(word) == config.WORD_SIZE)
     return int.from_bytes(word, byteorder='little')
@@ -24,6 +27,22 @@ def entry_id_to_tensor(id : str) -> torch.Tensor:
     if not data_raw:
         return None
     #unfortunately this has way more performance overhead but it is what it is
-    buf_tensor = torch.frombuffer(data_raw, offset=0, dtype=torch.uint8).long()
-    return torch.nn.functional.one_hot(buf_tensor, 256).to(torch.float32)
+    buf_tensor = torch.frombuffer(data_raw, offset=0, dtype=torch.uint8)
+    
+    #word_size * 8, vector containing set bits
+    #return torch.nn.functional.one_hot(buf_tensor, 256).to(torch.float32)
+    vec_size = config.WORD_SIZE * 8
+    res = torch.zeros(buf_tensor.size()[0], vec_size, dtype=torch.int32)
+    for it in range(buf_tensor.size()[0]):
+        #PLEASE use an alternative solution if doing this in scale
+        for idx in range(vec_size):
+            #maybe dtype conversion needed here
+            res[it][idx] = buf_tensor[it] >> idx & 1
+    return res
+            
+
+
+
+
+
 
