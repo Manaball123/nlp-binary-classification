@@ -69,7 +69,7 @@ def main():
 
 
     #freqs + entropy
-    class_model = model.ClassifierModel(257,1).to(device)
+    class_model = model.ClassifierModel(65537,1).to(device)
     start_time = time.time()
 
 
@@ -120,7 +120,7 @@ def main():
 
     #writer = SummaryWriter()
     
-    total_epochs = 5
+    total_epochs = 1
     #axis = plt.subplot(111)
     #line, = axis.plot(all_losses)
     for epoch in range(total_epochs):
