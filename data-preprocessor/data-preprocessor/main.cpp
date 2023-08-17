@@ -7,10 +7,10 @@
 
 
 
-constexpr size_t wordSize = 2;
+constexpr size_t wordSize = 1;
 
 //256 ^ wordSize
-constexpr size_t dictSize = 65536;
+constexpr size_t dictSize = 256;
 std::string ipath("../../dataset/samples/");
 std::string opath("../../dataset/output-samples/");
 
@@ -35,7 +35,7 @@ std::vector<float> GetRelativeFrequency(char* buf, size_t len)
 
 	for (size_t i = 0; i < len; i += wordSize)
 	{
-		unsigned short cchar = *(short*)(buf + i);
+		unsigned char cchar = buf[i];
 		//std::cout << std::hex << (int)cchar << std::endl;;
 		count [cchar] += 1;
 	}
