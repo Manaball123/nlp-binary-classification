@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import tokenizer
 import torch
 import os
 import utils
@@ -19,27 +18,31 @@ def get_files_index():
         #float represents the confidence, 0 = def not malware, 1 = pretty much sure it is
         files_index["list"] = np.where(files_index["list"] == "Whitelist", 0.0, 1.0)
         files_index.rename(columns={"list" : "confidence"}, inplace=True)
-        files_index = files_index[["confidence", "total", "positives"]]
+        files_index = files_index[["confidence", "entropy", "total", "positives"]]
 
     return files_index
 
 
-#deprecated
+
 def load_entry(id : str) -> tuple:
-    data_raw = utils.get_bin_data("dataset/samples/" + id)
-    if not data_raw:
+    data = utils.get_json("dataset/output-samples/" + id + ".json")
+    if not data:
         return None
-    in_tensor = tokenizer.bytes_to_tensor(data_raw)
+    in_tensor = torch.zeros(1,1,257)
+    for i in range(0,256):
+        in_tensor[0][0][i] = data[i]
+    in_tensor[0][0][256] = files_index.loc[id]["entropy"]
     out_tensor = torch.zeros(1,1,1)
     out_tensor[0][0][0] = files_index.loc[id]["confidence"]
     #should have marginally better performance
     #never occured to me that this, surprisingly, eats up vram
-    return (in_tensor,out_tensor)
+    #return (in_tensor,out_tensor)
+    return in_tensor
 
 def get_available_entries() -> list:
     files_available = []
-    for file_path in os.listdir("dataset/samples"):
-        files_available.append(file_path)
+    for file_path in os.listdir("dataset/output-samples"):
+        files_available.append(os.path.splitext(file_path)[0])
     return files_available
 
 def get_target_tensor(id : str) -> torch.Tensor:
@@ -48,14 +51,6 @@ def get_target_tensor(id : str) -> torch.Tensor:
     return out_tensor
 
 
-def load_all_available():
-    files_available = get_available_entries()
-    training_data = []
-    for v in files_available:
-        #training_data.append(load_entry(v))
-        #WAY faster load times
-        training_data.append(tokenizer.entry_id_to_tensor(v))
-    return training_data
 
 def get_entry_type(id : str) -> bool:
     conf = files_index.loc[id]["confidence"]

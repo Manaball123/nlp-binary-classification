@@ -1,5 +1,6 @@
 import torch
 import config
+import json
 
 def get_device() -> torch.device:
     is_cuda = torch.cuda.is_available()
@@ -16,6 +17,15 @@ def get_bin_data(filename : str) -> bytes:
         with open(filename, "rb") as f:
             data = f.read()
         return data
+    except FileNotFoundError:
+        print("[WARN]: filename " + filename + " not found!")
+        return None
+    
+def get_json(filename : str):
+    try:
+        with open(filename, "r") as f:
+            data = f.read()
+        return json.loads(data)
     except FileNotFoundError:
         print("[WARN]: filename " + filename + " not found!")
         return None

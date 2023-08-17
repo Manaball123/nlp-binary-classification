@@ -12,10 +12,9 @@ import time
 import itertools
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import tokenizer
 import random
 import copy
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 from torchvision import datasets, transforms
 import pdb
 from torch.utils.data import Dataset
@@ -45,7 +44,7 @@ def train(model_to_train : torch.nn.Module, input_tensor : torch.Tensor, target_
     model_to_train.zero_grad()
     optimizer.zero_grad()
     #only use the last output element
-    loss = criterion(output[-1], target_tensor)
+    loss = criterion(output[-1][-1], target_tensor)
     torch.nn.utils.clip_grad_norm(model_to_train.parameters(), max_norm=5.0)
     loss.backward()
     optimizer.step()
@@ -67,11 +66,10 @@ def main():
     device_cpu = torch.device("cpu")
     data_parser.get_files_index()
     
-    DataLoader()
+
 
     #freqs + entropy
-    class_model = model.ClassifierModel(257)
-    transformer = model.TransformerModel(config.WORD_SIZE * 8, ).to(device)
+    class_model = model.ClassifierModel(257,1).to(device)
     start_time = time.time()
 
 
@@ -120,7 +118,7 @@ def main():
         train_entries.append(v)
             
 
-    writer = SummaryWriter()
+    #writer = SummaryWriter()
     
     total_epochs = 5
     #axis = plt.subplot(111)
@@ -130,15 +128,15 @@ def main():
         random.shuffle(current_entries)
         print("\n\n\n------------------------------------Executing epoch " + str(epoch) + "------------------------------------\n\n\n")
 
-        optimizer = torch.optim.Adam(transformer.parameters(), learning_rate)
+        optimizer = torch.optim.Adam(class_model.parameters(), learning_rate)
         for it, entry in enumerate(current_entries):
             entry_start_time = time.time()
             utils.verbose_log("===========Processing " + entry + ", number " + str(it) + "============")
-            input_tensor = tokenizer.entry_id_to_tensor(entry).to(device)
+            input_tensor = data_parser.load_entry(entry).to(device)
             target_tensor = data_parser.get_target_tensor(entry).to(device)
             utils.verbose_log("Data preprocessing complete. Target tensor: " + str(target_tensor) + ", Input tensor size: " + str(input_tensor.size()))
 
-            output, loss = train(transformer, input_tensor, target_tensor, optimizer, learning_rate, criterion)
+            output, loss = train(class_model, input_tensor, target_tensor, optimizer, learning_rate, criterion)
             current_loss += loss
             entry_end_time = time.time()
 
@@ -156,11 +154,11 @@ def main():
 
             
         learning_rate = learning_rate * 0.5
-        torch.save(transformer.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
+        torch.save(class_model.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
         
 
     plt.show()
-    torch.save(transformer.state_dict(), "./model.pt")
+    torch.save(class_model.state_dict(), "./model.pt")
 
     
 
