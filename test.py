@@ -34,36 +34,11 @@ def main():
     #freqs + entropy
     class_model = model.ClassifierModel(257,1).to(device)
     class_model.load_state_dict(torch.load("./model.pt"))
-    start_time = time.time()
 
 
-    #print("Loading data")
-    #train_data = data_parser.load_all_available()
-    #print("Data loaded.")
-
+    benign_samples_n = 2048
+    malicious_samples_n = 2048
     
-
-    
-    learning_rate = 1e-3
-    benign_samples_n = 512
-    malicious_samples_n = 512
-    criterion = torch.nn.BCELoss()
-    
-
-    
-
-
-    print_every = 1
-    plot_every = 1
-
-
-
-    # Keep track of losses for plotting
-    current_loss = 0
-    all_losses = []
-
-
-    start = time.time()
 
     all_entries = data_parser.get_available_entries()
     train_entries = []
