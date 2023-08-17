@@ -17,7 +17,7 @@ std::string opath("../../dataset/output-samples/");
 namespace fs = std::filesystem;
 
 
-std::vector<double> GetRelativeFrequency(char* buf, size_t len)
+std::vector<float> GetRelativeFrequency(char* buf, size_t len)
 {
 	/*
 	std::vector<uint64_t> freqs;
@@ -29,7 +29,7 @@ std::vector<double> GetRelativeFrequency(char* buf, size_t len)
 	}
 	*/
 	std::vector<uint64_t> count;
-	std::vector<double> freqs;
+	std::vector<float> freqs;
 	freqs.resize(dictSize);
 	count.resize(dictSize);
 
@@ -74,7 +74,7 @@ void ParseData(fs::directory_entry in_entry)
 	ifs.read(buf, in_entry.file_size());
 
 
-	std::vector<double> freqs = GetRelativeFrequency(buf, bufLen);
+	std::vector<float> freqs = GetRelativeFrequency(buf, bufLen);
 	json j(freqs);
 	std::string out = j.dump();
 	std::string outpath = opath + in_path.filename().string() + ".json";
