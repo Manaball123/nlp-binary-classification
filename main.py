@@ -140,7 +140,7 @@ def main():
             current_loss += loss
             entry_end_time = time.time()
 
-            utils.verbose_log("Procession complete. final output: " + str(output[-1]) + ", loss: " + str(loss))
+            utils.verbose_log("Processing complete. final output: " + str(output[-1]) + ", loss: " + str(loss))
             utils.verbose_log("Time taken: " + str(entry_end_time - entry_start_time) + " seconds.")
 
 
