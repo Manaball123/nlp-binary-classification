@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 dataset/samples
 dataset/samples_backups
+dataset/output-samples
 checkpoints
 runs
 

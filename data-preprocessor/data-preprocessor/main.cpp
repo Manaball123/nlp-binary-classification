@@ -41,9 +41,9 @@ std::vector<float> GetRelativeFrequency(char* buf, size_t len)
 	}
 	
 	
-	for (size_t i = 0; i < wordSize; i++)
+	for (size_t i = 0; i < dictSize; i++)
 	{
-		freqs[i] = count[i] / len;
+		freqs[i] = (double)count[i] / (double)len;
 	}
 	return freqs;
 

@@ -120,31 +120,19 @@ class LSTM(nn.Module):
         return output
 
 
-class TorchLSTM(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, output_size, n_layers = 1) -> None:
-        super(TorchLSTM, self).__init__()
-        self.device = utils.get_device()
-
-        self.embedding_network = nn.Sequential(
-            nn.Linear(input_size, embedding_size)
+class ClassifierModel(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(ClassifierModel, self).__init__()
+        #dumbest model ever
+        self.input_to_output = nn.Sequential(
+            nn.Linear(input_size, 256),
+            nn.Tanh(),
+            nn.Linear(256, 64),
+            nn.Tanh(),
+            nn.Linear(64, 1),
+            nn.Sigmoid(),
         )
-        #:crying_emoji:
-        self.lstm_model = nn.LSTM(input_size=embedding_size, hidden_size=hidden_size, num_layers=n_layers, batch_first=True)
 
-        self.out_newtwork = nn.Sequential(
-            nn.Linear(hidden_size, output_size),
-            nn.Sigmoid()
-        )
-        #torch.nn.init.kaiming_normal_(self.parameters())
-    
     def forward(self, data):
-        embedding = self.embedding_network(data)
-        output, (h_n, c_n) = self.lstm_model(embedding)
-        output = self.out_newtwork(output)
-        return output
-
-
-    
-
-
+        return self.input_to_output(data)
     
