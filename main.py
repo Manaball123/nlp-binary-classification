@@ -90,7 +90,7 @@ def main():
 
 
     print_every = 1
-    plot_every = 1
+    plot_every = 16
 
 
 
@@ -149,6 +149,7 @@ def main():
             if it % plot_every == 0:
                 all_losses.append(current_loss / plot_every)
                 current_loss = 0
+
                 #writer.add_scalar(tag= "hi", scalar_value=loss)
                 
 
@@ -156,7 +157,7 @@ def main():
         learning_rate = learning_rate * 0.5
         torch.save(class_model.state_dict(), "./checkpoints/" + session_id + "/" + str(epoch) + ".pt")
         
-
+    plt.plot(all_losses)
     plt.show()
     torch.save(class_model.state_dict(), "./model.pt")
 
