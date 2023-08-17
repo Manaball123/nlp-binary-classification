@@ -28,9 +28,9 @@ def load_entry(id : str) -> tuple:
     data = utils.get_json("dataset/output-samples/" + id + ".json")
     if not data:
         return None
-    in_tensor = torch.zeros(1,1,257)
-    for i in range(0,256):
-        in_tensor[0][0][i] = data[i]
+    in_tensor = torch.zeros(1,1,65537)
+    for i in range(0,65536):
+        in_tensor[0][0][-1] = data[i]
     in_tensor[0][0][256] = files_index.loc[id]["entropy"]
     out_tensor = torch.zeros(1,1,1)
     out_tensor[0][0][0] = files_index.loc[id]["confidence"]
